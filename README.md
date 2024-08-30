@@ -23,5 +23,7 @@ The User Management App is a React-based application that allows users to create
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/your-repository.git
-   cd your-repository
+   git clone https://github.com/pritamkumarbishwas/tecnique-assignment.git
+   cd tecnique-assignment
+   npm install
+   npm start
