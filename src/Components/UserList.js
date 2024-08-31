@@ -21,10 +21,10 @@ const UserList = () => {
     const fetchUsers = async () => {
         try {
             const response = await axios.get("https://jsonplaceholder.typicode.com/users");
-            setUsers(response.data);
-            setLoading(false);
+            setUsers(response.data.sort((a, b) => b.id - a.id));
         } catch (error) {
-            setError("Error fetching Users");
+            setError("Error fetching users");
+        } finally {
             setLoading(false);
         }
     };
@@ -40,19 +40,33 @@ const UserList = () => {
     };
 
     const handleUserUpdated = (updatedUser) => {
-        setUsers(prevUsers => prevUsers.map(user =>
-            user.id === updatedUser.id ? updatedUser : user
-        ));
+        setUsers(prevUsers =>
+            prevUsers.map(user => user.id === updatedUser.id ? updatedUser : user)
+        );
         setShowEditModal(false);
         showToastMessage('User updated successfully', 'success');
     };
 
-    const handleSpecificUserDelete = async () => {
-        const userId = selectedUsers[0];
+    const handleUserDelete = async () => {
+        const isConfirmed = window.confirm("Are you sure you want to delete the selected users?");
+        if (!isConfirmed) return;
+
+        try {
+            await Promise.all(selectedUsers.map(userId =>
+                axios.delete(`https://jsonplaceholder.typicode.com/users/${userId}`)
+            ));
+            setUsers(prevUsers => prevUsers.filter(user => !selectedUsers.includes(user.id)));
+            setSelectedUsers([]);
+            showToastMessage('Selected users deleted successfully!', 'success');
+        } catch (error) {
+            showToastMessage('Error deleting users', 'error');
+        }
+    };
+
+    const handleSpecificUserDelete = async (userId) => {
         try {
             await axios.delete(`https://jsonplaceholder.typicode.com/users/${userId}`);
             setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
-            setSelectedUsers([]);
             showToastMessage('User deleted successfully', 'success');
         } catch (error) {
             showToastMessage('Error deleting user', 'error');
@@ -84,6 +98,14 @@ const UserList = () => {
                     onClick={() => setShowCreateModal(true)}
                 >
                     Create New User
+                </Button>
+                <Button
+                    variant="outline-danger"
+                    onClick={handleUserDelete}
+                    disabled={selectedUsers.length === 0}
+                    className="ms-2"
+                >
+                    Delete Selected
                 </Button>
             </div>
             <Table striped bordered hover responsive="sm">
@@ -148,7 +170,7 @@ const UserList = () => {
                                     size="sm"
                                     onClick={() => {
                                         if (window.confirm('Are you sure you want to delete this user?')) {
-                                            handleSpecificUserDelete();
+                                            handleSpecificUserDelete(user.id);
                                         }
                                     }}
                                 >
